@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Civic Sahayak — Officer Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --primary:#4F46E5;
+    --primary-hover:#4338CA;
+    --primary-soft:#EEF0FF;
+    --ink:#111827;
+    --slate:#6B7280;
+    --slate-soft:#9CA3AF;
+    --bg:#FFFFFF;
+    --bg-soft:#F9FAFB;
+    --border:#E5E7EB;
+    --border-soft:#F0F1F3;
+
+    --red:#DC2626;      --red-bg:#FEF2F2;      --red-border:#FCD3CC;
+    --amber:#D97706;    --amber-bg:#FFFBEB;    --amber-border:#FBE1A6;
+    --green:#16A34A;    --green-bg:#F0FDF4;    --green-border:#BFE8C8;
+    --resolved:#6B7280; --resolved-bg:#F3F4F6; --resolved-border:#E5E7EB;
+
+    --water:#2563EB;    --water-bg:#DBEAFE;
+    --roads:#0D9488;    --roads-bg:#CCFBF1;
+    --elec:#D97706;     --elec-bg:#FEF3C7;
+    --sani:#7C3AED;     --sani-bg:#EDE9FE;
+    --drain:#0284C7;    --drain-bg:#E0F2FE;
+
+    --radius-sm:8px;
+    --radius:12px;
+    --radius-lg:18px;
+    --radius-full:999px;
+    --shadow-sm:0 1px 2px rgba(17,24,39,0.04);
+    --shadow:0 1px 3px rgba(17,24,39,0.06), 0 1px 2px rgba(17,24,39,0.04);
+    --shadow-md:0 4px 14px rgba(17,24,39,0.08);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',ui-sans-serif,system-ui,sans-serif;
+    font-size:14px;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:#DDD9FF;}
+  :focus-visible{outline:2px solid var(--primary);outline-offset:2px;}
+  button{font-family:inherit;cursor:pointer;}
+  a{color:inherit;}
+  .screen{display:none;min-height:100vh;}
+  .screen.active{display:block;}
+
+  /* ===================== HEADER (shared) ===================== */
+  .topbar{
+    background:var(--bg);
+    border-bottom:1px solid var(--border);
+    display:flex;align-items:center;gap:18px;
+    padding:12px 24px;
+  }
+  .brand{display:flex;align-items:center;gap:11px;}
+  .brand-mark{
+    width:38px;height:38px;border-radius:11px;
+    background:linear-gradient(135deg,var(--primary),#6D28D9);
+    display:flex;align-items:center;justify-content:center;flex:none;
+    box-shadow:var(--shadow-sm);
+  }
+  .brand-name{font-weight:800;font-size:15.5px;letter-spacing:-0.2px;line-height:1.15;}
+  .brand-sub{font-size:11.5px;color:var(--slate-soft);font-weight:500;}
+
+  .demo-pill{
+    font-size:11px;font-weight:600;color:#B45309;background:var(--amber-bg);
+    border:1px solid var(--amber-border);padding:4px 11px;border-radius:var(--radius-full);
+    white-space:nowrap;
+  }
+
+  .segmented{display:flex;background:var(--bg-soft);border:1px solid var(--border);border-radius:var(--radius-full);padding:3px;gap:2px;}
+  .segmented button{
+    border:none;background:none;color:var(--slate);font-size:12.5px;font-weight:600;
+    padding:6px 15px;border-radius:var(--radius-full);
+  }
+  .segmented button.active{background:var(--bg);color:var(--primary);box-shadow:var(--shadow-sm);}
+
+  .topbar-search{position:relative;width:260px;}
+  .topbar-search input{
+    width:100%;background:var(--bg-soft);border:1px solid var(--border);color:var(--ink);
+    font-size:13px;padding:8px 12px 8px 32px;border-radius:var(--radius-full);font-family:inherit;
+  }
+  .topbar-search input::placeholder{color:var(--slate-soft);}
+  .topbar-search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--slate-soft);}
+
+  .topbar-right{margin-left:auto;display:flex;align-items:center;gap:12px;}
+  .zone-pill{font-size:11.5px;font-weight:600;color:var(--primary);background:var(--primary-soft);padding:5px 12px;border-radius:var(--radius-full);white-space:nowrap;}
+  .officer-chip{display:flex;align-items:center;gap:8px;padding:4px 12px 4px 4px;border-radius:var(--radius-full);background:var(--bg-soft);border:1px solid var(--border);}
+  .officer-avatar{width:26px;height:26px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;}
+  .officer-chip-name{font-size:12.5px;font-weight:600;color:var(--ink);}
+  .logout-btn{background:none;border:1px solid var(--border);color:var(--slate);font-size:12px;font-weight:600;padding:7px 12px;border-radius:var(--radius-full);}
+  .logout-btn:hover{background:var(--bg-soft);color:var(--ink);}
+
+  .main-shell{max-width:1180px;margin:0 auto;padding:0 24px;}
+
+  /* ===================== LOGIN ===================== */
+  #screen-login.active{display:flex;}
+  .login-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:56px 16px;}
+  .login-brandrow{display:flex;align-items:center;gap:11px;margin-bottom:26px;}
+  .login-brandrow .brand-mark{width:44px;height:44px;border-radius:13px;}
+  .login-brandrow .brand-name{font-size:18px;}
+  .login-brandrow .brand-sub{font-size:12px;}
+
+  .login-card{
+    width:440px;max-width:100%;background:var(--bg);
+    border:1px solid var(--border);border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-md);padding:32px 30px 28px;
+  }
+  .login-pill{
+    display:inline-flex;align-items:center;gap:6px;margin:0 auto 18px;
+    background:var(--primary-soft);color:var(--primary);font-size:12px;font-weight:600;
+    padding:6px 14px;border-radius:var(--radius-full);
+  }
+  .login-pill-row{display:flex;justify-content:center;}
+  .login-heading{font-size:20px;font-weight:800;text-align:center;letter-spacing:-0.3px;margin-bottom:6px;}
+  .login-sub{font-size:12.5px;color:var(--slate);text-align:center;margin-bottom:26px;}
+
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:12px;font-weight:600;color:var(--ink);margin-bottom:6px;}
+  .field input{
+    width:100%;padding:10px 13px;border:1px solid var(--border);border-radius:var(--radius);
+    background:var(--bg-soft);font-family:inherit;font-size:13.5px;color:var(--ink);
+  }
+  .field input:focus{border-color:var(--primary);background:var(--bg);}
+  .field input::placeholder{color:var(--slate-soft);}
+
+  .dept-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .dept-chip{
+    border:1px solid var(--border);border-radius:var(--radius);padding:10px 11px;cursor:pointer;
+    display:flex;align-items:center;gap:9px;background:var(--bg);
+  }
+  .dept-chip:hover{background:var(--bg-soft);}
+  .dept-chip.selected{border-color:var(--primary);background:var(--primary-soft);}
+  .dept-icon{width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex:none;}
+  .dept-chip span.name{font-size:12px;font-weight:600;color:var(--ink);}
+
+  .login-btn{
+    width:100%;margin-top:20px;background:var(--primary);color:#fff;border:none;
+    border-radius:var(--radius);padding:12px;font-size:14px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;gap:7px;
+  }
+  .login-btn:hover{background:var(--primary-hover);}
+  .login-error{font-size:12px;color:var(--red);margin-top:10px;display:none;text-align:center;}
+  .login-error.show{display:block;}
+  .login-foot{text-align:center;font-size:11.5px;color:var(--slate-soft);margin-top:20px;}
+
+  /* ===================== QUEUE ===================== */
+  .page-head{padding:28px 0 4px;}
+  .page-title{font-size:22px;font-weight:800;letter-spacing:-0.4px;margin-bottom:4px;}
+  .page-sub{font-size:13px;color:var(--slate);margin-bottom:22px;}
+
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px;}
+  .stat-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 18px 16px;box-shadow:var(--shadow-sm);}
+  .stat-icon{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;}
+  .stat-num{font-size:26px;font-weight:800;letter-spacing:-0.5px;line-height:1;}
+  .stat-label{font-size:12px;color:var(--slate);margin-top:6px;font-weight:500;}
+
+  .filter-bar{display:flex;flex-wrap:wrap;gap:20px;align-items:center;padding-bottom:18px;margin-bottom:6px;border-bottom:1px solid var(--border-soft);}
+  .filter-group{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  .filter-group-label{font-size:11.5px;font-weight:700;color:var(--slate-soft);margin-right:2px;text-transform:uppercase;letter-spacing:0.4px;}
+  .chip{font-size:12.5px;font-weight:600;padding:6px 13px;border-radius:var(--radius-full);border:1px solid var(--border);background:var(--bg);color:var(--slate);}
+  .chip:hover{background:var(--bg-soft);}
+  .chip.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .chip.active.u-high{background:var(--red);border-color:var(--red);}
+  .chip.active.u-medium{background:var(--amber);border-color:var(--amber);}
+  .chip.active.u-low{background:var(--green);border-color:var(--green);}
+
+  .ticket-list{display:flex;flex-direction:column;gap:10px;padding:18px 0 60px;}
+  .ticket-card{
+    display:flex;align-items:center;gap:16px;padding:15px 18px;
+    background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);
+    cursor:pointer;box-shadow:var(--shadow-sm);
+  }
+  .ticket-card:hover{border-color:#D7D3FF;box-shadow:var(--shadow-md);}
+  .sla-arc{flex:none;}
+  .ticket-main{flex:1;min-width:0;}
+  .ticket-id{font-size:11px;font-weight:700;color:var(--slate-soft);letter-spacing:0.3px;margin-bottom:2px;}
+  .ticket-title{font-size:14px;font-weight:700;color:var(--ink);}
+  .ai-line{font-size:12.5px;color:var(--slate);margin-top:5px;line-height:1.45;display:flex;gap:7px;}
+  .ai-tag{font-size:9.5px;font-weight:800;letter-spacing:0.4px;color:var(--primary);background:var(--primary-soft);padding:2px 6px;border-radius:5px;flex:none;height:fit-content;margin-top:1px;}
+  .ticket-meta{font-size:11.5px;color:var(--slate-soft);margin-top:7px;display:flex;gap:9px;align-items:center;flex-wrap:wrap;}
+  .lang-tag{font-size:10.5px;border:1px solid var(--border);padding:2px 7px;border-radius:6px;color:var(--slate);font-weight:600;}
+  .ward-tag{display:inline-flex;align-items:center;gap:4px;}
+
+  .urgency-pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:4px 10px;border-radius:var(--radius-full);border:1px solid;white-space:nowrap;flex:none;}
+  .urgency-pill .dot{width:6px;height:6px;border-radius:50%;background:currentColor;}
+  .urgency-pill.high{color:var(--red);border-color:var(--red-border);background:var(--red-bg);}
+  .urgency-pill.medium{color:var(--amber);border-color:var(--amber-border);background:var(--amber-bg);}
+  .urgency-pill.low{color:var(--green);border-color:var(--green-border);background:var(--green-bg);}
+
+  .status-pill{font-size:11px;font-weight:700;padding:4px 10px;border-radius:var(--radius-full);border:1px solid;white-space:nowrap;flex:none;}
+  .status-pill.breached{color:var(--red);border-color:var(--red-border);background:var(--red-bg);}
+  .status-pill.due{color:var(--amber);border-color:var(--amber-border);background:var(--amber-bg);}
+  .status-pill.track{color:var(--green);border-color:var(--green-border);background:var(--green-bg);}
+  .status-pill.resolved{color:var(--resolved);border-color:var(--resolved-border);background:var(--resolved-bg);}
+
+  .chevron{color:var(--slate-soft);flex:none;}
+  .empty-state{padding:70px 24px;text-align:center;color:var(--slate);}
+  .empty-state h3{font-size:16px;margin:0 0 6px;color:var(--ink);font-weight:700;}
+  .empty-state p{font-size:13px;margin:0;}
+
+  /* ===================== DETAIL ===================== */
+  .detail-shell{padding:22px 0 60px;}
+  .back-btn{display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:var(--primary);font-size:13px;font-weight:600;padding:6px 0;margin-bottom:16px;}
+  .detail-id{font-size:11.5px;font-weight:700;color:var(--slate-soft);margin-bottom:5px;letter-spacing:0.3px;}
+  .detail-title{font-size:21px;font-weight:800;letter-spacing:-0.4px;line-height:1.3;max-width:640px;}
+  .detail-meta-row{display:flex;gap:9px;flex-wrap:wrap;margin:12px 0 24px;align-items:center;}
+  .dept-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:5px 12px 5px 6px;border-radius:var(--radius-full);}
+  .dept-badge .dept-icon{width:20px;height:20px;border-radius:6px;}
+
+  .detail-grid{display:grid;grid-template-columns:1fr 320px;gap:22px;align-items:start;}
+  .dblock{margin-bottom:22px;}
+  .dblock-label{font-size:11.5px;font-weight:700;letter-spacing:0.3px;text-transform:uppercase;color:var(--slate-soft);margin-bottom:10px;}
+
+  .sla-banner{display:flex;align-items:center;gap:13px;padding:13px 15px;border-radius:var(--radius-lg);border:1px solid;margin-bottom:22px;}
+  .sla-banner.breached{background:var(--red-bg);border-color:var(--red-border);}
+  .sla-banner.due{background:var(--amber-bg);border-color:var(--amber-border);}
+  .sla-banner.track{background:var(--green-bg);border-color:var(--green-border);}
+  .sla-banner.resolved{background:var(--resolved-bg);border-color:var(--resolved-border);}
+  .sla-banner-text{font-size:13px;line-height:1.4;color:var(--ink);}
+  .sla-banner-text strong{display:block;font-size:13.5px;margin-bottom:2px;}
+
+  .ai-summary-card{background:var(--primary-soft);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:14px;}
+  .ai-summary-card .card-tag{color:var(--primary);}
+  .ai-summary-card p{margin:0;font-size:13.5px;line-height:1.6;color:#312E81;font-weight:600;}
+
+  .quote-box{background:var(--bg-soft);border:1px solid var(--border);border-left:3px solid var(--primary);padding:13px 15px;border-radius:0 var(--radius) var(--radius) 0;font-size:13.5px;line-height:1.65;margin-bottom:10px;}
+  .translation-box{font-size:13px;line-height:1.65;color:var(--ink);padding:0 15px;}
+  .card-tag{font-size:10.5px;font-weight:700;color:var(--slate-soft);margin-bottom:5px;display:block;text-transform:uppercase;letter-spacing:0.3px;}
+
+  .photo-thumb{
+    width:100%;height:150px;border-radius:var(--radius-lg);border:1px solid var(--border);
+    background:var(--bg-soft);
+    display:flex;align-items:center;justify-content:center;color:var(--slate-soft);font-size:12px;gap:7px;font-weight:600;
+  }
+
+  .classify-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;box-shadow:var(--shadow-sm);}
+  .classify-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border-soft);}
+  .classify-row:last-child{border-bottom:none;}
+  .classify-key{font-size:12.5px;color:var(--slate);font-weight:500;}
+  .classify-val{font-size:13px;font-weight:700;text-align:right;}
+  .confidence-bar{height:5px;background:var(--border-soft);border-radius:3px;overflow:hidden;margin-top:10px;}
+  .confidence-fill{height:100%;background:var(--primary);border-radius:3px;}
+
+  .linked-list{display:flex;flex-direction:column;gap:9px;}
+  .linked-card{display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--bg);cursor:pointer;}
+  .linked-card:hover{background:var(--bg-soft);border-color:#D7D3FF;}
+  .linked-main{flex:1;min-width:0;}
+  .linked-id{font-size:10.5px;font-weight:700;color:var(--slate-soft);}
+  .linked-title{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .linked-status{font-size:10.5px;font-weight:700;flex:none;padding:3px 9px;border-radius:var(--radius-full);border:1px solid;}
+
+  .timeline{list-style:none;margin:0;padding:0;}
+  .tl-item{display:flex;gap:12px;padding-bottom:17px;position:relative;}
+  .tl-item:last-child{padding-bottom:0;}
+  .tl-item::before{content:"";position:absolute;left:5px;top:16px;bottom:0;width:1.5px;background:var(--border);}
+  .tl-item:last-child::before{display:none;}
+  .tl-dot{width:11px;height:11px;border-radius:50%;border:2.5px solid var(--border);background:var(--bg);flex:none;margin-top:2px;}
+  .tl-item.done .tl-dot{background:var(--green);border-color:var(--green);}
+  .tl-item.current .tl-dot{background:var(--primary);border-color:var(--primary);}
+  .tl-title{font-size:12.5px;font-weight:700;color:var(--ink);}
+  .tl-item:not(.done):not(.current) .tl-title{color:var(--slate-soft);font-weight:600;}
+  .tl-time{font-size:11px;color:var(--slate-soft);margin-top:2px;font-weight:500;}
+
+  .status-actions{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:12px;}
+  .btn{font-size:12.5px;font-weight:700;padding:9px 15px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg);color:var(--ink);}
+  .btn:hover{background:var(--bg-soft);}
+  .btn.primary{background:var(--primary);color:#fff;border-color:var(--primary);}
+  .btn.primary:hover{background:var(--primary-hover);}
+  .note-area{width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:11px 13px;font-family:inherit;font-size:13px;resize:vertical;min-height:70px;margin-bottom:10px;background:var(--bg-soft);}
+  .note-area:focus{border-color:var(--primary);background:var(--bg);}
+
+  /* ===================== ANALYTICS ===================== */
+  .analytics-shell{padding:22px 0 60px;}
+  .panel{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px 22px;margin-bottom:20px;box-shadow:var(--shadow-sm);}
+  .panel-title{font-size:14.5px;font-weight:700;margin-bottom:3px;}
+  .panel-sub{font-size:12px;color:var(--slate-soft);margin-bottom:18px;}
+
+  .bar-row{display:flex;align-items:center;gap:13px;margin-bottom:11px;}
+  .bar-row:last-child{margin-bottom:0;}
+  .bar-label{width:110px;flex:none;font-size:12.5px;color:var(--slate);font-weight:500;}
+  .bar-track{flex:1;height:10px;background:var(--bg-soft);border-radius:6px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:6px;}
+  .bar-num{width:30px;flex:none;font-size:12.5px;text-align:right;color:var(--ink);font-weight:700;}
+
+  .trend-chart{display:flex;align-items:flex-end;gap:12px;height:120px;padding-top:10px;}
+  .trend-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;height:100%;justify-content:flex-end;}
+  .trend-bar{width:100%;max-width:36px;background:var(--primary);border-radius:6px 6px 2px 2px;}
+  .trend-bar-val{font-size:11px;color:var(--slate);font-weight:700;}
+  .trend-day{font-size:10.5px;color:var(--slate-soft);font-weight:600;}
+
+  .ward-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+  .ward-tile{border:1px solid var(--border);border-radius:var(--radius);padding:13px 13px 11px;background:var(--bg-soft);position:relative;overflow:hidden;}
+  .ward-name{font-size:12px;font-weight:700;margin-bottom:15px;}
+  .ward-count{font-size:21px;font-weight:800;letter-spacing:-0.3px;}
+  .ward-count-label{font-size:10.5px;color:var(--slate-soft);font-weight:500;}
+  .ward-breach{font-size:10.5px;color:var(--red);margin-top:5px;font-weight:700;}
+
+  .legend{display:flex;gap:16px;font-size:11.5px;color:var(--slate);margin-top:16px;flex-wrap:wrap;font-weight:500;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .legend .dot{width:8px;height:8px;border-radius:50%;}
+
+  .toast{position:fixed;bottom:22px;right:24px;background:var(--ink);color:#fff;padding:12px 17px;border-radius:var(--radius);font-size:13px;font-weight:500;box-shadow:0 10px 26px rgba(17,24,39,0.22);transform:translateY(12px);opacity:0;transition:all 0.2s ease;z-index:60;pointer-events:none;}
+  .toast.show{transform:translateY(0);opacity:1;}
+
+  @media (max-width:820px){
+    .detail-grid{grid-template-columns:1fr;}
+    .ticket-card{flex-wrap:wrap;}
+    .ticket-card .row-ward,.ticket-card .urgency-pill{display:none;}
+    .stat-grid{grid-template-columns:1fr 1fr;}
+    .ward-grid{grid-template-columns:1fr 1fr;}
+    .topbar-search{display:none;}
+    .segmented button{padding:6px 10px;font-size:12px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== LOGIN SCREEN ===================== -->
+<div class="screen active" id="screen-login">
+  <div class="login-wrap">
+    <div class="login-brandrow">
+      <div class="brand-mark">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      </div>
+      <div>
+        <div class="brand-name">Civic Sahayak</div>
+        <div class="brand-sub">Officer Console</div>
+      </div>
+    </div>
+
+    <div class="login-card">
+      <div class="login-pill-row"><div class="login-pill"><span style="width:6px;height:6px;border-radius:50%;background:var(--primary);display:inline-block;"></span>Officer sign-in</div></div>
+      <div class="login-heading">Welcome back</div>
+      <div class="login-sub">Sign in to manage complaints for your department.</div>
+
+      <div class="field">
+        <label for="loginName">Officer name</label>
+        <input type="text" id="loginName" placeholder="e.g. Ravi Kumar">
+      </div>
+      <div class="field">
+        <label for="loginId">Employee ID</label>
+        <input type="text" id="loginId" placeholder="e.g. BBMP-Z4-0472">
+      </div>
+      <div class="field">
+        <label for="loginPass">Password</label>
+        <input type="password" id="loginPass" placeholder="••••••••">
+      </div>
+      <div class="field">
+        <label>Department</label>
+        <div class="dept-grid" id="deptGrid"></div>
+      </div>
+
+      <button class="login-btn" id="loginBtn">Sign in <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+      <div class="login-error" id="loginError">Enter your name, employee ID, and select a department to continue.</div>
+    </div>
+    <div class="login-foot">Zonal login only · contact your ward officer for access</div>
+  </div>
+</div>
+
+<!-- ===================== QUEUE SCREEN ===================== -->
+<div class="screen" id="screen-queue">
+  <div class="topbar" id="topbar-queue"></div>
+  <div class="main-shell">
+    <div class="page-head">
+      <div class="page-title" id="queueDeptTitle">Ticket queue</div>
+      <div class="page-sub" id="queueDeptSub">Complaints routed to your department</div>
+    </div>
+    <div class="stat-grid" id="statGrid"></div>
+    <div class="filter-bar">
+      <div class="filter-group">
+        <span class="filter-group-label">Urgency</span>
+        <div id="urgencyChips" style="display:flex;gap:6px;"></div>
+      </div>
+      <div class="filter-group">
+        <span class="filter-group-label">Status</span>
+        <div id="statusChips" style="display:flex;gap:6px;"></div>
+      </div>
+    </div>
+    <div class="ticket-list" id="queueList"></div>
+  </div>
+</div>
+
+<!-- ===================== DETAIL SCREEN ===================== -->
+<div class="screen" id="screen-detail">
+  <div class="topbar" id="topbar-detail"></div>
+  <div class="main-shell">
+    <div class="detail-shell" id="detailContent"></div>
+  </div>
+</div>
+
+<!-- ===================== ANALYTICS SCREEN ===================== -->
+<div class="screen" id="screen-analytics">
+  <div class="topbar" id="topbar-analytics"></div>
+  <div class="main-shell">
+    <div class="page-head">
+      <div class="page-title" id="analyticsTitle">Analytics</div>
+      <div class="page-sub" id="analyticsSub">Performance overview</div>
+    </div>
+    <div class="analytics-shell" id="analyticsContent"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===================== ICONS ===================== */
+const ICONS = {
+  water:'<path d="M12 2s6.5 7.2 6.5 11.5a6.5 6.5 0 1 1-13 0C5.5 9.2 12 2 12 2z"/>',
+  roads:'<path d="M4 20 9 4h2l-1 16"/><path d="M20 20 15 4h-2l1 16"/><path d="M10.5 12h3" stroke-dasharray="2 3"/>',
+  elec:'<path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0 0 12 2z"/>',
+  sani:'<path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>',
+  drain:'<path d="M2 8c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0 3-1.4 4.5 0 3 1.4 4.5 0"/><path d="M2 15c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0 3-1.4 4.5 0 3 1.4 4.5 0"/>',
+};
+const ICON_ARROW = '<polyline points="9 6 15 12 9 18"/>';
+const ICON_BACK = '<polyline points="15 18 9 12 15 6"/>';
+const ICON_CHECK = '<path d="M20 6 9 17l-5-5"/>';
+const ICON_SEARCH = '<circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>';
+const ICON_TICKET = '<path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2a2 2 0 0 0 0 6v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-6V7z"/>';
+const ICON_CLOCK = '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>';
+const ICON_ALERT = '<path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.86 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.86a2 2 0 0 0-3.4 0z"/>';
+const ICON_MAPPIN = '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/>';
+const ICON_CAMERA = '<rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="4"/><path d="M8 6l1.5-2h5L16 6"/>';
+
+function icon(name, size=15, stroke='currentColor', sw=2){
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${name}</svg>`;
+}
+
+/* ===================== DATA ===================== */
+const DEPARTMENTS = [
+  {id:'water', name:'Water Supply', short:'BWSSB', color:'var(--water)', bg:'var(--water-bg)', icon:ICONS.water},
+  {id:'roads', name:'Roads & Potholes', short:'BBMP Roads', color:'var(--roads)', bg:'var(--roads-bg)', icon:ICONS.roads},
+  {id:'electricity', name:'Streetlights & Power', short:'BESCOM', color:'var(--elec)', bg:'var(--elec-bg)', icon:ICONS.elec},
+  {id:'sanitation', name:'Sanitation', short:'BBMP Health', color:'var(--sani)', bg:'var(--sani-bg)', icon:ICONS.sani},
+  {id:'drainage', name:'Storm Water Drains', short:'SWD Cell', color:'var(--drain)', bg:'var(--drain-bg)', icon:ICONS.drain},
+];
+function deptInfo(id){ return DEPARTMENTS.find(d=>d.id===id); }
+function deptIconHTML(d, sizeBox=26, iconSize=14){
+  return `<span class="dept-icon" style="width:${sizeBox}px;height:${sizeBox}px;background:${d.bg};color:${d.color}">${icon(d.icon, iconSize, d.color, 2)}</span>`;
+}
+
+const TICKETS = [
+  // ---- WATER ----
+  {id:'CS-2381', ward:'Jayanagar 4th Block', dept:'water', urgency:'high',
+    lang:'ಕನ್ನಡ', langCode:'kn',
+    original:'ಜಯನಗರ 4ನೇ ಬ್ಲಾಕ್‌ನಲ್ಲಿ ಮುಖ್ಯ ರಸ್ತೆಯ ಪೈಪ್ ಒಡೆದು ಮೂರು ದಿನಗಳಿಂದ ನೀರು ಪೋಲಾಗುತ್ತಿದೆ. ರಸ್ತೆ ಕೂಡ ಜಲಾವೃತವಾಗಿದೆ.',
+    translation:'A main water pipe has been broken for three days near Jayanagar 4th Block, wasting water and flooding the road.',
+    title:'Main pipe burst, road waterlogged for 3 days',
+    aiSummary:'Pipe burst flooding the main road for 3 days; continuous water loss, road surface likely damaged underneath.',
+    reportedAgo:'2d 6h ago', reportedTime:'11 Aug, 9:14 AM',
+    slaHours:48, elapsedHours:52,
+    officer:'Manoj S.', officerInit:'MS', photo:true, aiConf:92,
+    linked:[{id:'CS-2381-R', dept:'roads'}],
+    timeline:[
+      {label:'Reported by citizen', time:'11 Aug, 9:14 AM', state:'done'},
+      {label:'Acknowledged', time:'11 Aug, 11:40 AM', state:'done'},
+      {label:'Assigned to BWSSB field unit', time:'11 Aug, 2:05 PM', state:'done'},
+      {label:'In progress', time:'—', state:'current'},
+      {label:'Resolved', time:'—', state:'pending'},
+    ]},
+  {id:'CS-2411', ward:'Rajajinagar 2nd Block', dept:'water', urgency:'medium',
+    lang:'ಕನ್ನಡ', langCode:'kn',
+    original:'ನಮ್ಮ ಬೀದಿಯಲ್ಲಿ ನಾಲ್ಕು ದಿನಗಳಿಂದ ನೀರು ಪೂರೈಕೆ ಇಲ್ಲ. ಟ್ಯಾಂಕರ್ ಕೂಡ ಬಂದಿಲ್ಲ.',
+    translation:'There has been no water supply on our street for four days, and no tanker has come either.',
+    title:'No water supply for four days, no tanker sent',
+    aiSummary:'Residential street without piped water for 4 days; scheduled tanker has not arrived either.',
+    reportedAgo:'1h ago', reportedTime:'14 Aug, 11:40 AM',
+    slaHours:48, elapsedHours:1,
+    officer:'Manoj S.', officerInit:'MS', photo:false, aiConf:90,
+    linked:[],
+    timeline:[
+      {label:'Reported by citizen', time:'14 Aug, 11:40 AM', state:'done'},
+      {label:'Acknowledged', time:'—', state:'current'},
+      {label:'Assigned to BWSSB', time:'—', state:'pending'},
+      {label:'In progress', time:'—', state:'pending'},
+      {label:'Resolved', time:'—', state:'pending'},
+    ]},
+  {id:'CS-2360', ward:'Malleshwaram 15th Cross', dept:'water', urgency:'low',
+    lang:'English', langCode:'en',
+    original:'Minor seepage from a stopcock chamber near our gate. Not urgent but has been damp for a week.',
+    translation:'Minor seepage from a stopcock chamber near our gate. Not urgent but has been damp for a week.',
+    title:'Minor seepage from stopcock chamber',
+    aiSummary:'Slow leak from a stopcock chamber, low volume, damp patch for about a week, no immediate hazard.',
+    reportedAgo:'Resolved 2d ago', reportedTime:'8 Aug, 10:00 AM',
+    slaHours:72, elapsedHours:60, resolved:true,
+    officer:'Manoj S.', officerInit:'MS', photo:false, aiConf:85,
+    linked:[],
+    timeline:[
+      {label:'Reported by citizen', time:'8 Aug, 10:00 AM', state:'done'},
+      {label:'Acknowledged', time:'8 Aug, 1:00 PM', state:'done'},
+      {label:'Assigned to BWSSB', time:'8 Aug, 2:00 PM', state:'done'},
+      {label:'In progress', time:'9 Aug, 9:00 AM', state:'done'},
+      {label:'Resolved & citizen notified', time:'12 Aug, 4:00 PM', state:'done'},
+    ]},
+
+  // ---- ROADS ----
+  {id:'CS-2394', ward:'HSR Layout, Sector 2', dept:'roads', urgency:'high',
+    lang:'हिन्दी', langCode:'hi',
+    original:'सेक्टर 2 में मुख्य सड़क पर बड़ा गड्ढा है, दोपहिया वाहन गिर रहे हैं। कृपया जल्दी ठीक करें।',
+    translation:'There is a large pothole on the main road in Sector 2 — two-wheelers keep skidding. Please repair urgently.',
+    title:'Large pothole causing two-wheeler accidents',
+    aiSummary:'Deep pothole on a main road causing repeated two-wheeler skids; safety risk, high traffic area.',
+    reportedAgo:'19h ago', reportedTime:'13 Aug, 4:20 PM',
+    slaHours:24, elapsedHours:19,
+    officer:'Unassigned', officerInit:'—', photo:true, aiConf:88,
+    linked:[],
+    timeline:[
+      {label:'Reported by citizen', time:'13 Aug, 4:20 PM', state:'done'},
+      {label:'Acknowledged', time:'13 Aug, 5:02 PM', state:'done'},
+      {label:'Assigned to BBMP Roads', time:'—', state:'current'},
+      {label:'In progress', time:'—', state:'pending'},
+      {label:'Resolved', time:'—', state:'pending'},
+    ]},
+  {id:'CS-2381-R', ward:'Jayanagar 4th Block', dept:'roads', urgency:'high',
+    lang:'ಕನ್ನಡ', langCode:'kn',
+    original:'ಪೈಪ್ ಒಡೆದ ಜಾಗದಲ್ಲಿ ರಸ್ತೆ ಕುಸಿಯುತ್ತಿದೆ, ವಾಹನ ಸಂಚಾರಕ್ಕೆ ಅಪಾಯಕಾರಿ.',
+    translation:'The road surface is caving in where the pipe burst — it is unsafe for vehicles.',
+    title:'Road subsidence at pipe burst site',
+    aiSummary:'Split from CS-2381: the road surface above the burst water pipe is subsiding, unsafe for vehicles.',
+    reportedAgo:'2d 5h ago', reportedTime:'11 Aug, 10:30 AM',
+    slaHours:48, elapsedHours:53,
+    officer:'Ashok R.', officerInit:'AR', photo:true, aiConf:87,
+    linked:[{id:'CS-2381', dept:'water'}],
+    timeline:[
+      {label:'Auto-created from CS-2381 (Water)', time:'11 Aug, 10:30 AM', state:'done'},
+      {label:'Acknowledged', time:'11 Aug, 1:00 PM', state:'done'},
+      {label:'Assigned to BBMP Roads', time:'11 Aug, 3:00 PM', state:'done'},
+      {label:'In progress', time:'—', state:'current'},
+      {label:'Resolved', time:'—', state:'pending'},
+    ]},
+  {id:'CS-2388', ward:'Indiranagar 100ft Rd', dept:'roads', urgency:'medium',
+    lang:'हिन्दी', langCode:'hi',
+    original:'100 फीट रोड पर सड़क धंस गई है, बड़ा गड्ढा बन गया है। कल एक बाइक फिसल गई।',
+    translation:'The road has caved in on 100ft Road, forming a large pit. A bike skidded there yesterday.',
+    title:'Road cave-in near 100ft Road junction',
+    aiSummary:'Localised cave-in forming a pit on a busy road; one skid incident reported, no injuries noted.',
+    reportedAgo:'Resolved yesterday', reportedTime:'12 Aug, 10:00 AM',
+    slaHours:24, elapsedHours:22, resolved:true,
+    officer:'Ashok R.', officerInit:'AR', photo:true, aiConf:93,
+    linked:[],
+    timeline:[
+      {label:'Reported by citizen', time:'12 Aug, 10:00 AM', state:'done'},
+      {label:'Acknowledged', time:'12 Aug, 10:30 AM', state:'done'},
+      {label:'Assigned to BBMP Roads', time:'12 Aug, 11:00 AM', state:'done'},
+      {label:'In progress', time:'12 Aug, 2:00 PM', state:'done'},
+      {label:'Resolved & citizen notified', time:'13 Aug, 6:00 PM', state:'done'},
+    ]},
+
+  // ---- ELECTRICITY ----
+  {id:'CS-2399', ward:'Yeshwanthpur Industrial', dept:'electricity', urgency:'high',
+    lang:'English', langCode:'en',
+    original:'Transformer near the industrial gate is sparking intermittently at night. It is a fire hazard close to a fuel storage shed.',
+    translation:'Transformer near the industrial gate is sparking intermittently at night. It is a fire hazard close to a fuel storage shed.',
+    title:'Sparking transformer near fuel storage — fire risk',
+    aiSummary:'Transformer sparking intermittently at night, close to fuel storage; flagged as a potential fire hazard.',
+    reportedAgo:'3h ago', reportedTime:'14 Aug, 9:50 AM',
+    slaHours:12, elapsedHours:3,
+    officer:'Divya N.', officerInit:'DN', photo:true, aiConf:97,
+    linked:[],
+    timeline:[
+      {label:'Reported by citizen', time:'14 Aug, 9:50 AM', state:'done'},
+      {label:'Acknowledged', time:'14 Aug, 10:00 AM', state:'done'},
+      {label:'Assigned to BESCOM — flagged urgent', time:'14 Aug, 10:05 AM', state:'current'},
+      {label:'In progress', time:'—', state:'pending'},
+      {label:'Resolved', time:'—', state:'pending'},
+    ]},
+  {id:'CS-2402', ward:'Malleshwaram 8th Cross', dept:'electricity', urgency:'medium',
+    lang:'తెలుగు', langCode:'te',
+    original:'8వ క్రాస్‌లో వీధి దీపం మూడు రోజులుగా వెలగడం లేదు, రాత్రి నడవడం కష్టంగా ఉంది.',
+    translation:'The streetlight on 8th Cross has not worked for three days, making it hard to walk at night.',
+    title:'Streetlight non-functional for three days',
+    aiSummary:'Single streetlight outage for 3 days on a residential cross street; reduced night visibility for pedestrians.',
+    reportedAgo:'5h ago', reportedTime:'14 Aug, 8:10 AM',
+    slaHours:72, elapsedHours:5,
+    officer:'Divya N.', officerInit:'DN', photo:false, aiConf:81,
+    linked:[],
+    timeline:[
+      {label:'Reported by citizen', time:'14 Aug, 8:10 AM', state:'done'},
+      {label:'Acknowledged', time:'14 Aug, 9:00 AM', state:'done'},
+      {label:'Assigned to BESCOM', time:'14 Aug, 9:45 AM', state:'current'},
+      {label:'In progress', time:'—', state:'pending'},
+      {label:'Resolved', time:'—', state:'pending'},
+    ]},
+  {id:'CS-2340', ward:'Vijayanagar 3rd Stage', dept:'electricity', urgency:'low',
+    lang:'ಕನ್ನಡ', langCode:'kn',
+    original:'ಒಂದು ಬೀದಿ ದೀಪ ಸಂಜೆ ಸ್ವಲ್ಪ ಮಿನುಗುತ್ತದೆ, ಆದರೆ ಆಫ್ ಆಗುವುದಿಲ್ಲ.',
+    translation:'One streetlight flickers a little in the evening but does not switch off.',
+    title:'Streetlight flickering intermittently',
+    aiSummary:'Cosmetic flicker on one streetlight, still functional, low impact on visibility.',
+    reportedAgo:'Resolved 3d ago', reportedTime:'9 Aug, 7:00 PM',
+    slaHours:72, elapsedHours:40, resolved:true,
+    officer:'Divya N.', officerInit:'DN', photo:false, aiConf:74,
+    linked:[],
+    timeline:[
+      {label:'Reported by citizen', time:'9 Aug, 7:00 PM', state:'done'},
+      {label:'Acknowledged', time:'10 Aug, 9:00 AM', state:'done'},
+      {label:'Assigned to BESCOM', time:'10 Aug, 10:00 AM', state:'done'},
+      {label:'In progress', time:'10 Aug, 3:00 PM', state:'done'},
+      {label:'Resolved & citizen notified', time:'11 Aug, 11:00 AM', state:'done'},
+    ]},
+
+  // ---- SANITATION ----
+  {id:'CS-2379', ward:'Basavanagudi Market Rd', dept:'sanitation', urgency:'medium',
+    lang:'தமிழ்', langCode:'ta',
+    original:'சந்தை சாலையில் மூன்று நாட்களாக குப்பை அகற்றப்படவில்லை, துர்நாற்றம் வீசுகிறது.',
+    translation:'Garbage has not been collected on Market Road for three days and it is causing a strong odour.',
+    title:'Garbage uncollected near market for 3 days',
+    aiSummary:'Household and market waste uncollected for 3 days, strong odour reported, near a food market.',
+    reportedAgo:'Resolved 4h ago', reportedTime:'10 Aug, 7:30 AM',
+    slaHours:24, elapsedHours:24, resolved:true,
+    officer:'Suresh P.', officerInit:'SP', photo:true, aiConf:95,
+    linked:[],
+    timeline:[
+      {label:'Reported by citizen', time:'10 Aug, 7:30 AM', state:'done'},
+      {label:'Acknowledged', time:'10 Aug, 8:00 AM', state:'done'},
+      {label:'Assigned to BBMP Health', time:'10 Aug, 8:30 AM', state:'done'},
+      {label:'In progress', time:'10 Aug, 1:00 PM', state:'done'},
+      {label:'Resolved & citizen notified', time:'Today, 10:20 AM', state:'done'},
+    ]},
+  {id:'CS-2418', ward:'Shivajinagar Bus Stand', dept:'sanitation', urgency:'high',
+    lang:'हिन्दी', langCode:'hi',
+    original:'बस स्टैंड के पास कूड़ा जमा होकर सड़ रहा है, मक्खियाँ बहुत हैं, यात्रियों को दिक्कत हो रही है।',
+    translation:'Garbage is piling up and rotting near the bus stand, there are a lot of flies, and it is troubling commuters.',
+    title:'Rotting garbage pile near bus stand',
+    aiSummary:'Large rotting waste pile near a high-footfall bus stand; fly infestation, public health concern.',
+    reportedAgo:'8h ago', reportedTime:'14 Aug, 6:00 AM',
+    slaHours:12, elapsedHours:8,
+    officer:'Suresh P.', officerInit:'SP', photo:true, aiConf:91,
+    linked:[],
+    timeline:[
+      {label:'Reported by citizen', time:'14 Aug, 6:00 AM', state:'done'},
+      {label:'Acknowledged', time:'14 Aug, 6:40 AM', state:'done'},
+      {label:'Assigned to BBMP Health — flagged urgent', time:'14 Aug, 7:00 AM', state:'current'},
+      {label:'In progress', time:'—', state:'pending'},
+      {label:'Resolved', time:'—', state:'pending'},
+    ]},
+
+  // ---- DRAINAGE ----
+  {id:'CS-2405', ward:'Koramangala 5th Block', dept:'drainage', urgency:'medium',
+    lang:'English', langCode:'en',
+    original:'Storm water drain outside BDA complex is overflowing onto the footpath every time it rains. It is a slip hazard for elderly residents.',
+    translation:'Storm water drain outside BDA complex is overflowing onto the footpath every time it rains. It is a slip hazard for elderly residents.',
+    title:'Drain overflow onto footpath during rain',
+    aiSummary:'Storm drain overflows onto the footpath during rain, repeated occurrence, slip hazard for elderly residents.',
+    reportedAgo:'11h ago', reportedTime:'14 Aug, 2:00 AM',
+    slaHours:24, elapsedHours:11,
+    officer:'Unassigned', officerInit:'—', photo:true, aiConf:78,
+    linked:[],
+    timeline:[
+      {label:'Reported by citizen', time:'14 Aug, 2:00 AM', state:'done'},
+      {label:'Acknowledged', time:'14 Aug, 6:15 AM', state:'current'},
+      {label:'Assigned to SWD Cell', time:'—', state:'pending'},
+      {label:'In progress', time:'—', state:'pending'},
+      {label:'Resolved', time:'—', state:'pending'},
+    ]},
+  {id:'CS-2350', ward:'Frazer Town Church St', dept:'drainage', urgency:'high',
+    lang:'English', langCode:'en',
+    original:'Open drain cover missing near the church junction, a scooter fell in last week. Needs urgent barricading and cover.',
+    translation:'Open drain cover missing near the church junction, a scooter fell in last week. Needs urgent barricading and cover.',
+    title:'Missing drain cover — vehicle fell in last week',
+    aiSummary:'Open, uncovered drain at a junction; a scooter already fell in once. Immediate safety risk pending repair.',
+    reportedAgo:'Resolved 5d ago', reportedTime:'6 Aug, 9:00 AM',
+    slaHours:12, elapsedHours:10, resolved:true,
+    officer:'Ashok R.', officerInit:'AR', photo:true, aiConf:96,
+    linked:[],
+    timeline:[
+      {label:'Reported by citizen', time:'6 Aug, 9:00 AM', state:'done'},
+      {label:'Acknowledged', time:'6 Aug, 9:20 AM', state:'done'},
+      {label:'Assigned to SWD Cell — flagged urgent', time:'6 Aug, 9:30 AM', state:'done'},
+      {label:'In progress', time:'6 Aug, 1:00 PM', state:'done'},
+      {label:'Resolved & citizen notified', time:'6 Aug, 7:00 PM', state:'done'},
+    ]},
+];
+
+const STATUS_META = {
+  breached:{label:'Breached', color:'var(--red)'},
+  due:{label:'Due soon', color:'var(--amber)'},
+  track:{label:'On track', color:'var(--green)'},
+  resolved:{label:'Resolved', color:'var(--resolved)'},
+};
+const URGENCY_META = {high:'High', medium:'Medium', low:'Low'};
+
+function getStatus(t){
+  if(t.resolved) return 'resolved';
+  const pct = t.elapsedHours / t.slaHours;
+  if(pct >= 1) return 'breached';
+  if(pct >= 0.8) return 'due';
+  return 'track';
+}
+function getRemainingLabel(t){
+  if(t.resolved) return 'Closed within SLA';
+  const remaining = t.slaHours - t.elapsedHours;
+  if(remaining <= 0) return `${Math.abs(remaining).toFixed(0)}h past SLA deadline`;
+  return `${remaining.toFixed(0)}h remaining on SLA`;
+}
+function findTicket(id){ return TICKETS.find(t=>t.id===id); }
+
+/* ===================== STATE ===================== */
+let state = {
+  officer:null,
+  screen:'login',
+  urgencyFilter:null,
+  statusFilter:null,
+  search:'',
+  selectedId:null,
+};
+
+/* ===================== LOGIN ===================== */
+function renderDeptGrid(){
+  const wrap = document.getElementById('deptGrid');
+  wrap.innerHTML = DEPARTMENTS.map(d=>`
+    <div class="dept-chip" data-dept="${d.id}">
+      ${deptIconHTML(d, 26, 14)}
+      <span class="name">${d.short}</span>
+    </div>`).join('');
+  wrap.querySelectorAll('.dept-chip').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      wrap.querySelectorAll('.dept-chip').forEach(o=>o.classList.remove('selected'));
+      el.classList.add('selected');
+      wrap.dataset.selected = el.dataset.dept;
+    });
+  });
+}
+renderDeptGrid();
+
+document.getElementById('loginBtn').addEventListener('click', ()=>{
+  const name = document.getElementById('loginName').value.trim();
+  const id = document.getElementById('loginId').value.trim();
+  const dept = document.getElementById('deptGrid').dataset.selected;
+  const errEl = document.getElementById('loginError');
+  if(!name || !id || !dept){ errEl.classList.add('show'); return; }
+  errEl.classList.remove('show');
+  state.officer = {name, id, dept};
+  goTo('queue');
+});
+
+/* ===================== TOPBAR (shared) ===================== */
+function initials(name){ return name.split(' ').filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join(''); }
+function renderTopbar(activeTab){
+  const html = `
+    <div class="brand">
+      <div class="brand-mark">${icon('<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>', 18, '#fff', 2)}</div>
+      <div><div class="brand-name">Civic Sahayak</div><div class="brand-sub">Officer Console</div></div>
+    </div>
+    <div class="demo-pill">Demo Mode</div>
+    <div class="segmented">
+      <button data-tab="queue" class="${activeTab==='queue'?'active':''}">Queue</button>
+      <button data-tab="analytics" class="${activeTab==='analytics'?'active':''}">Analytics</button>
+    </div>
+    ${activeTab==='queue' ? `
+    <div class="topbar-search">${icon(ICON_SEARCH,14,'currentColor',2)}<input id="searchInput" type="text" placeholder="Search ticket ID, ward, or keyword…" value="${state.search}"></div>` : '<div style="flex:1"></div>'}
+    <div class="topbar-right">
+      <span class="zone-pill">${state.officer ? deptInfo(state.officer.dept).short : ''} · Zone 4</span>
+      <div class="officer-chip">
+        <div class="officer-avatar">${state.officer ? initials(state.officer.name) : ''}</div>
+        <span class="officer-chip-name">${state.officer ? state.officer.name : ''}</span>
+      </div>
+      <button class="logout-btn" id="logoutBtn">Log out</button>
+    </div>
+  `;
+  ['topbar-queue','topbar-detail','topbar-analytics'].forEach(tid=>{ document.getElementById(tid).innerHTML = html; });
+  document.querySelectorAll('.segmented button').forEach(btn=>btn.addEventListener('click', ()=>goTo(btn.dataset.tab)));
+  document.querySelectorAll('#logoutBtn').forEach(btn=>btn.addEventListener('click', logout));
+  const search = document.getElementById('searchInput');
+  if(search) search.addEventListener('input', (e)=>{ state.search = e.target.value; renderQueue(); });
+}
+function logout(){
+  state = {officer:null, screen:'login', urgencyFilter:null, statusFilter:null, search:'', selectedId:null};
+  document.getElementById('loginName').value='';
+  document.getElementById('loginId').value='';
+  document.getElementById('loginPass').value='';
+  document.querySelectorAll('.dept-chip').forEach(o=>o.classList.remove('selected'));
+  document.getElementById('deptGrid').dataset.selected='';
+  goTo('login');
+}
+
+/* ===================== ROUTING ===================== */
+function goTo(screen, ticketId){
+  state.screen = screen;
+  if(ticketId) state.selectedId = ticketId;
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+screen).classList.add('active');
+  window.scrollTo(0,0);
+  if(screen==='queue'){ renderTopbar('queue'); renderQueue(); }
+  if(screen==='detail'){ renderTopbar('queue'); renderDetail(); }
+  if(screen==='analytics'){ renderTopbar('analytics'); renderAnalytics(); }
+}
+
+/* ===================== SLA ARC ===================== */
+function slaArcSVG(t, size=36){
+  const status = getStatus(t);
+  const color = STATUS_META[status].color;
+  const pct = Math.min(t.elapsedHours / t.slaHours, 1);
+  const r = 15, c = 2*Math.PI*r;
+  const dash = c*pct, gap = c-dash;
+  const check = status==='resolved' ? `<path d="M11 16l3 3 6-7" stroke="${color}" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>` : '';
+  return `<svg class="sla-arc" width="${size}" height="${size}" viewBox="0 0 36 36">
+    <circle cx="18" cy="18" r="${r}" fill="none" stroke="var(--border-soft)" stroke-width="3.4"/>
+    <circle cx="18" cy="18" r="${r}" fill="none" stroke="${color}" stroke-width="3.4" stroke-dasharray="${dash} ${gap}" stroke-linecap="round" transform="rotate(-90 18 18)"/>
+    ${check}
+  </svg>`;
+}
+function urgencyPill(u){ return `<span class="urgency-pill ${u}"><span class="dot"></span>${URGENCY_META[u]}</span>`; }
+
+/* ===================== QUEUE ===================== */
+function deptTickets(){ return TICKETS.filter(t=>t.dept===state.officer.dept); }
+function filteredTickets(){
+  return deptTickets().filter(t=>{
+    if(state.urgencyFilter && t.urgency!==state.urgencyFilter) return false;
+    if(state.statusFilter && getStatus(t)!==state.statusFilter) return false;
+    if(state.search){
+      const s = state.search.toLowerCase();
+      const hay = `${t.id} ${t.ward} ${t.title} ${t.aiSummary}`.toLowerCase();
+      if(!hay.includes(s)) return false;
+    }
+    return true;
+  }).sort((a,b)=>{
+    const order = {breached:0, due:1, track:2, resolved:3};
+    return order[getStatus(a)] - order[getStatus(b)];
+  });
+}
+function renderQueue(){
+  const d = deptInfo(state.officer.dept);
+  document.getElementById('queueDeptTitle').textContent = `${d.name} — ticket queue`;
+  document.getElementById('queueDeptSub').textContent = `Complaints routed to ${d.short}, Bengaluru Zone 4`;
+
+  const all = deptTickets();
+  const open = all.filter(t=>!t.resolved).length;
+  const breached = all.filter(t=>getStatus(t)==='breached').length;
+  const due = all.filter(t=>getStatus(t)==='due').length;
+  const resolved = all.filter(t=>t.resolved).length;
+
+  document.getElementById('statGrid').innerHTML = `
+    <div class="stat-card"><div class="stat-icon" style="background:var(--primary-soft);color:var(--primary)">${icon(ICON_TICKET,18)}</div><div class="stat-num">${open}</div><div class="stat-label">Open tickets</div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:var(--red-bg);color:var(--red)">${icon(ICON_ALERT,18)}</div><div class="stat-num" style="color:var(--red)">${breached}</div><div class="stat-label">SLA breached</div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:var(--amber-bg);color:var(--amber)">${icon(ICON_CLOCK,18)}</div><div class="stat-num" style="color:var(--amber)">${due}</div><div class="stat-label">Due soon</div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:var(--green-bg);color:var(--green)">${icon(ICON_CHECK,18)}</div><div class="stat-num" style="color:var(--green)">${resolved}</div><div class="stat-label">Resolved</div></div>
+  `;
+
+  const uWrap = document.getElementById('urgencyChips');
+  uWrap.innerHTML = ['high','medium','low'].map(u=>`<button class="chip ${state.urgencyFilter===u?'active u-'+u:''}" data-u="${u}">${URGENCY_META[u]}</button>`).join('');
+  uWrap.querySelectorAll('.chip').forEach(c=>c.addEventListener('click', ()=>{ state.urgencyFilter = state.urgencyFilter===c.dataset.u ? null : c.dataset.u; renderQueue(); }));
+
+  const sWrap = document.getElementById('statusChips');
+  const order = ['breached','due','track','resolved'];
+  sWrap.innerHTML = order.map(s=>`<button class="chip ${state.statusFilter===s?'active':''}" data-s="${s}">${STATUS_META[s].label}</button>`).join('');
+  sWrap.querySelectorAll('.chip').forEach(c=>c.addEventListener('click', ()=>{ state.statusFilter = state.statusFilter===c.dataset.s ? null : c.dataset.s; renderQueue(); }));
+
+  const list = filteredTickets();
+  const wrap = document.getElementById('queueList');
+  if(list.length===0){
+    wrap.innerHTML = `<div class="empty-state"><h3>No tickets match these filters</h3><p>Try clearing a filter or searching a different keyword.</p></div>`;
+    return;
+  }
+  wrap.innerHTML = list.map(t=>{
+    const status = getStatus(t);
+    return `<div class="ticket-card" data-id="${t.id}">
+      ${slaArcSVG(t)}
+      <div class="ticket-main">
+        <div class="ticket-id">${t.id}</div>
+        <div class="ticket-title">${t.title}</div>
+        <div class="ai-line"><span class="ai-tag">AI</span><span>${t.aiSummary}</span></div>
+        <div class="ticket-meta">
+          <span class="lang-tag">${t.lang}</span>
+          <span class="ward-tag">${icon(ICON_MAPPIN,12)}${t.ward}</span>
+          <span>${t.reportedAgo}</span>
+        </div>
+      </div>
+      ${urgencyPill(t.urgency)}
+      <span class="status-pill ${status}">${STATUS_META[status].label}</span>
+      <span class="chevron">${icon(ICON_ARROW,16)}</span>
+    </div>`;
+  }).join('');
+  wrap.querySelectorAll('.ticket-card').forEach(el=>el.addEventListener('click', ()=> goTo('detail', el.dataset.id)));
+}
+
+/* ===================== DETAIL ===================== */
+function renderDetail(){
+  const t = findTicket(state.selectedId);
+  const wrap = document.getElementById('detailContent');
+  if(!t){ wrap.innerHTML=''; return; }
+  const status = getStatus(t);
+  const d = deptInfo(t.dept);
+
+  wrap.innerHTML = `
+    <button class="back-btn" id="backBtn">${icon(ICON_BACK,15)} Back to queue</button>
+    <div class="detail-id">${t.id} · ${t.ward}</div>
+    <div class="detail-title">${t.title}</div>
+    <div class="detail-meta-row">
+      <span class="dept-badge" style="background:${d.bg};color:${d.color}">${deptIconHTML(d,20,11)}${d.name}</span>
+      ${urgencyPill(t.urgency)}
+      <span class="lang-tag">${t.lang}</span>
+    </div>
+
+    <div class="detail-grid">
+      <div>
+        <div class="sla-banner ${status}">
+          ${slaArcSVG(t)}
+          <div class="sla-banner-text"><strong>${STATUS_META[status].label}</strong>${getRemainingLabel(t)} · reported ${t.reportedTime}</div>
+        </div>
+
+        <div class="dblock">
+          <div class="dblock-label">AI summary</div>
+          <div class="ai-summary-card">
+            <span class="card-tag">Generated so officers don't need to read the full complaint first</span>
+            <p>${t.aiSummary}</p>
+          </div>
+        </div>
+
+        <div class="dblock">
+          <div class="dblock-label">Citizen's complaint · ${t.lang}</div>
+          <div class="quote-box">${t.original}</div>
+          <div class="translation-box"><span class="card-tag">AI translation (English)</span>${t.translation}</div>
+        </div>
+
+        ${t.photo ? `
+        <div class="dblock">
+          <div class="dblock-label">Attached photo</div>
+          <div class="photo-thumb">${icon(ICON_CAMERA,18)} Photo submitted with complaint</div>
+        </div>` : ''}
+
+        <div class="dblock">
+          <div class="dblock-label">Update status</div>
+          <div class="status-actions">
+            <button class="btn primary" data-action="acknowledge">Acknowledge</button>
+            <button class="btn" data-action="progress">Mark in progress</button>
+            <button class="btn" data-action="resolve">Mark resolved</button>
+          </div>
+        </div>
+
+        <div class="dblock">
+          <div class="dblock-label">Note to citizen</div>
+          <textarea class="note-area" id="noteArea" placeholder="e.g. Field team dispatched, expect repair within 24 hours…"></textarea>
+          <button class="btn primary" id="sendUpdateBtn">Send update to citizen</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="dblock">
+          <div class="dblock-label">AI classification</div>
+          <div class="classify-card">
+            <div class="classify-row"><span class="classify-key">Routed department</span><span class="classify-val">${d.name}</span></div>
+            <div class="classify-row"><span class="classify-key">Urgency</span><span class="classify-val">${URGENCY_META[t.urgency]}</span></div>
+            <div class="classify-row"><span class="classify-key">Confidence</span><span class="classify-val">${t.aiConf}%</span></div>
+            <div class="confidence-bar"><div class="confidence-fill" style="width:${t.aiConf}%"></div></div>
+          </div>
+        </div>
+
+        ${t.linked && t.linked.length ? `
+        <div class="dblock">
+          <div class="dblock-label">Linked tickets · split across departments</div>
+          <div class="linked-list">
+            ${t.linked.map(l=>{
+              const lt = findTicket(l.id); if(!lt) return '';
+              const ld = deptInfo(lt.dept); const lstatus = getStatus(lt);
+              return `<div class="linked-card" data-id="${lt.id}">
+                ${deptIconHTML(ld,26,14)}
+                <div class="linked-main"><div class="linked-id">${lt.id} · ${ld.short}</div><div class="linked-title">${lt.title}</div></div>
+                <span class="linked-status" style="color:${STATUS_META[lstatus].color};border-color:${STATUS_META[lstatus].color}33;background:${STATUS_META[lstatus].color}14">${STATUS_META[lstatus].label}</span>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>` : ''}
+
+        <div class="dblock">
+          <div class="dblock-label">Status timeline</div>
+          <ul class="timeline">
+            ${t.timeline.map(step=>`
+              <li class="tl-item ${step.state==='done'?'done':step.state==='current'?'current':''}">
+                <div class="tl-dot"></div>
+                <div><div class="tl-title">${step.label}</div><div class="tl-time">${step.time}</div></div>
+              </li>`).join('')}
+          </ul>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('backBtn').addEventListener('click', ()=>goTo('queue'));
+  wrap.querySelectorAll('.linked-card').forEach(card=>card.addEventListener('click', ()=>{ if(findTicket(card.dataset.id)) goTo('detail', card.dataset.id); }));
+  wrap.querySelectorAll('[data-action]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const action = btn.dataset.action;
+      if(action==='resolve'){ t.resolved = true; showToast(`${t.id} marked resolved`); }
+      else if(action==='acknowledge'){ showToast(`${t.id} acknowledged`); }
+      else if(action==='progress'){ showToast(`${t.id} marked in progress`); }
+      renderDetail();
+    });
+  });
+  document.getElementById('sendUpdateBtn').addEventListener('click', ()=>{
+    const val = document.getElementById('noteArea').value.trim();
+    if(val){ showToast(`Update sent to citizen for ${t.id}`); document.getElementById('noteArea').value=''; }
+    else{ showToast('Write a short note before sending'); }
+  });
+}
+
+/* ===================== ANALYTICS ===================== */
+function renderAnalytics(){
+  const wrap = document.getElementById('analyticsContent');
+  const mine = deptTickets();
+  const d = deptInfo(state.officer.dept);
+  document.getElementById('analyticsTitle').textContent = `${d.name} — analytics`;
+  document.getElementById('analyticsSub').textContent = `Performance overview for ${d.short}, Bengaluru Zone 4`;
+
+  const open = mine.filter(t=>!t.resolved).length;
+  const resolved = mine.filter(t=>t.resolved).length;
+  const breached = mine.filter(t=>getStatus(t)==='breached').length;
+  const avgRes = '1d 6h';
+
+  const statusCounts = {breached:0, due:0, track:0, resolved:0};
+  mine.forEach(t=> statusCounts[getStatus(t)]++);
+  const maxStatus = Math.max(...Object.values(statusCounts), 1);
+
+  const days = ['Aug 8','Aug 9','Aug 10','Aug 11','Aug 12','Aug 13','Aug 14'];
+  const trend = [2,1,3,2,4,3,2].map((v,i)=> i===days.length-1 ? mine.length : v);
+  const maxTrend = Math.max(...trend, 1);
+
+  const wardMap = {};
+  TICKETS.forEach(t=>{
+    if(!wardMap[t.ward]) wardMap[t.ward] = {count:0, breached:0};
+    wardMap[t.ward].count++;
+    if(getStatus(t)==='breached') wardMap[t.ward].breached++;
+  });
+  const wardEntries = Object.entries(wardMap).sort((a,b)=>b[1].count-a[1].count).slice(0,8);
+  const maxWard = Math.max(...wardEntries.map(e=>e[1].count), 1);
+
+  wrap.innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-icon" style="background:var(--primary-soft);color:var(--primary)">${icon(ICON_TICKET,18)}</div><div class="stat-num">${open}</div><div class="stat-label">Open tickets</div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:var(--resolved-bg);color:var(--resolved)">${icon(ICON_CHECK,18)}</div><div class="stat-num" style="color:var(--resolved)">${resolved}</div><div class="stat-label">Resolved</div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:var(--red-bg);color:var(--red)">${icon(ICON_ALERT,18)}</div><div class="stat-num" style="color:var(--red)">${breached}</div><div class="stat-label">SLA breaches</div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:var(--primary-soft);color:var(--primary)">${icon(ICON_CLOCK,18)}</div><div class="stat-num" style="font-size:22px;">${avgRes}</div><div class="stat-label">Avg. resolution time</div></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Tickets by SLA status</div>
+      <div class="panel-sub">${d.short} queue, all time</div>
+      ${['breached','due','track','resolved'].map(s=>`
+        <div class="bar-row">
+          <div class="bar-label">${STATUS_META[s].label}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${(statusCounts[s]/maxStatus*100)}%;background:${STATUS_META[s].color}"></div></div>
+          <div class="bar-num">${statusCounts[s]}</div>
+        </div>`).join('')}
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Tickets reported, last 7 days</div>
+      <div class="panel-sub">${d.short} only</div>
+      <div class="trend-chart">
+        ${trend.map((v,i)=>`
+          <div class="trend-col">
+            <div class="trend-bar-val">${v}</div>
+            <div class="trend-bar" style="height:${(v/maxTrend*90)}px"></div>
+            <div class="trend-day">${days[i]}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Where complaints are clustering</div>
+      <div class="panel-sub">All departments, Bengaluru Zone 4 — tile size reflects complaint volume</div>
+      <div class="ward-grid">
+        ${wardEntries.map(([ward,info])=>{
+          const intensity = 0.10 + (info.count/maxWard)*0.5;
+          return `<div class="ward-tile" style="background:linear-gradient(0deg, rgba(79,70,229,${intensity}), rgba(79,70,229,${intensity})), var(--bg-soft);">
+            <div class="ward-name">${ward}</div>
+            <div class="ward-count">${info.count}</div>
+            <div class="ward-count-label">complaint${info.count!==1?'s':''}</div>
+            ${info.breached ? `<div class="ward-breach">${info.breached} SLA breach${info.breached!==1?'es':''}</div>` : ''}
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="legend">
+        <span><span class="dot" style="background:var(--primary);opacity:0.2"></span>Fewer complaints</span>
+        <span><span class="dot" style="background:var(--primary);opacity:0.65"></span>More complaints</span>
+        <span style="color:var(--red)"><span class="dot" style="background:var(--red)"></span>Has active SLA breach</span>
+      </div>
+    </div>
+  `;
+}
+
+/* ===================== TOAST ===================== */
+let toastTimer;
+function showToast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.classList.remove('show'), 2400);
+}
+</script>
+</body>
+</html>
